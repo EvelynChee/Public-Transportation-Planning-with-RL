@@ -23,7 +23,9 @@ File Description
 3. network.py -- Contains classes for the non-linear estimators (ActionValueEstimator, 
 		 StateValueEstimator, PolicyEstimator) which will be trained and used for
 		 prediction. 
-
+4. Theory & Algorithms for Reinforcement Learning.pdf -- Introduction to theories and algorithms
+		for reinforcement learning with results on its application in public transportation
+		planning.
 
 Example
 ---------
