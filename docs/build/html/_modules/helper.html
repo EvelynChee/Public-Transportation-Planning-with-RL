@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>helper &mdash; Public Transportation Planning with RL 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Public Transportation Planning with RL
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/intro.html">Public Transportation Planning using RL</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Public Transportation Planning with RL</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>helper</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for helper</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">env</span> <span class="k">import</span> <span class="o">*</span>
+
+<div class="viewcode-block" id="create_line"><a class="viewcode-back" href="../modules/helper.html#helper.create_line">[docs]</a><span class="k">def</span> <span class="nf">create_line</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">stations</span><span class="p">,</span> <span class="n">max_passengers</span><span class="p">,</span> <span class="n">waiting_cost</span><span class="p">,</span> <span class="n">deploy_cost</span><span class="p">,</span> \
+                <span class="n">boarding_rate</span><span class="p">,</span> <span class="n">overtake_penalty</span><span class="p">,</span> <span class="n">no_bus_penalty</span><span class="p">,</span> <span class="n">pickup_reward</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates an object of the BusLine class from the env module.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       D (int): Distance of the bus route.</span>
+<span class="sd">       stations (list): List of 3-tuples with the 1st being the location of</span>
+<span class="sd">                        the station in the bus route, the 2nd being the mean</span>
+<span class="sd">                        time interval between the arrival of two passengers</span>
+<span class="sd">                        at the station during peak hour and the 3rd is the same</span>
+<span class="sd">                        but during non-peak hour.</span>
+<span class="sd">       max_passengers (int): Max number of passengers each station could contain.</span>
+<span class="sd">       waiting_cost (float): Cost for each waiting passenger per unit time.</span>
+<span class="sd">       deploy_cost (float): Cost of deploying a bus.</span>
+<span class="sd">       boarding_rate (int): Number of passengers boarding a bus per unit time.</span>
+<span class="sd">       overtake_penalty (float): Cost for a bus overtaking another.</span>
+<span class="sd">       no_bus_penalty (float): Penalty for deploying a bus when there is none.</span>
+<span class="sd">       pickup_reward (float): Reward for picking up a passenger.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">       BusLine created.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Creates a new bus route with buses traveling in a loop.</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">BusLine</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">waiting_cost</span><span class="p">,</span> <span class="n">overtake_penalty</span><span class="p">,</span> <span class="n">no_bus_penalty</span><span class="p">,</span> <span class="n">pickup_reward</span><span class="p">)</span>
+    
+    <span class="c1"># Adding stations to the bus route.</span>
+    <span class="k">for</span> <span class="n">loc</span><span class="p">,</span> <span class="n">peak_rate</span><span class="p">,</span> <span class="n">non_peak_rate</span> <span class="ow">in</span> <span class="n">stations</span><span class="p">:</span>
+        <span class="n">line</span><span class="o">.</span><span class="n">add_station</span><span class="p">(</span><span class="n">peak_rate</span><span class="p">,</span> <span class="n">non_peak_rate</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">max_passengers</span><span class="p">)</span>
+    
+    <span class="c1"># Adding 10 buses to the terminal of the bus route with all buses having</span>
+    <span class="c1"># the same deployment cost and boarding rate.</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">line</span><span class="o">.</span><span class="n">add_bus</span><span class="p">(</span><span class="n">deploy_cost</span><span class="p">,</span> <span class="n">boarding_rate</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">line</span></div>
+
+<div class="viewcode-block" id="batch_sampling3"><a class="viewcode-back" href="../modules/helper.html#helper.batch_sampling3">[docs]</a><span class="k">def</span> <span class="nf">batch_sampling3</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Randomly pick elements from the three arrays. Elements of the same indexes</span>
+<span class="sd">    are picked from the three arrays and the pairing will be retained.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       x (array): Array of elements.</span>
+<span class="sd">       y (array): Array of elements with the same length as x.</span>
+<span class="sd">       z (array): Array of elements with the same length as x.</span>
+<span class="sd">       batch_size (int): Number of elements to be sampled.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       Three arrays with elements sampled from array x, y and z respectively.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="n">samples</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">samples</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">samples</span><span class="p">]</span>    </div>
+
+<span class="c1">###################################################################################</span>
+<span class="c1">#                             Handcrafted Policies                                #</span>
+<span class="c1">###################################################################################</span>
+
+<div class="viewcode-block" id="no_bus"><a class="viewcode-back" href="../modules/helper.html#helper.no_bus">[docs]</a><span class="k">def</span> <span class="nf">no_bus</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">passenger</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_test</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;To get the average rewards of a handcrafted policy. The policy is to deploy</span>
+<span class="sd">    a bus when the total number of passengers in the bus route exceeds a certain</span>
+<span class="sd">    amount and the nearest bus from the terminal is further than a certain distance. </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       line (BusLine): Bus route that the policy will be implemented on.</span>
+<span class="sd">       passenger (float): The threshold that the total number of passengers out of</span>
+<span class="sd">                          out of the total maximum that the bus route could contain</span>
+<span class="sd">                          should exceed to deploy a bus.</span>
+<span class="sd">       loc (int): The distance from the terminal that the nearest bus should reach</span>
+<span class="sd">                  before another bus could be deployed.</span>
+<span class="sd">       n_epochs (int): Number of epochs to run.</span>
+<span class="sd">       n_test (int, optional): Number of iterations in each epochs. Default is 1000.</span>
+<span class="sd">       </span>
+<span class="sd">    Returns:</span>
+<span class="sd">       An array with elements being the average reward per unit time in each epoch.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">)</span>    <span class="c1"># Stores the average rewards of each epochs.</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_test</span><span class="p">)</span>  <span class="c1"># Stores the rewards at each time step in one epoch.</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_test</span><span class="p">):</span>
+            <span class="c1"># Get the current representation of the environment.</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_feature</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Take the action of deploying a bus if both conditions are satisfied.</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">passenger</span> <span class="ow">and</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">loc</span><span class="o">/</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">D</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">avg</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+                
+    <span class="k">return</span> <span class="n">avg</span></div>
+
+<div class="viewcode-block" id="no_bus_timing"><a class="viewcode-back" href="../modules/helper.html#helper.no_bus_timing">[docs]</a><span class="k">def</span> <span class="nf">no_bus_timing</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">passenger1</span><span class="p">,</span> <span class="n">passenger2</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_test</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;To get the average rewards of a handcrafted policy. The policy is to deploy</span>
+<span class="sd">    a bus when the total number of passengers in the bus route exceeds a certain</span>
+<span class="sd">    amount and the nearest bus from the terminal is further than a certain distance.</span>
+<span class="sd">    The threshold on total number of passengers could be different during peak and</span>
+<span class="sd">    non-peak hour.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       line (BusLine): Bus route that the policy will be implemented on.</span>
+<span class="sd">       passenger1 (float): The threshold that the total number of passengers out of</span>
+<span class="sd">                           out of the total maximum that the bus route could contain</span>
+<span class="sd">                           should exceed to deploy a bus during peak hour.</span>
+<span class="sd">       passenger2 (float): The threshold that the total number of passengers out of</span>
+<span class="sd">                           out of the total maximum that the bus route could contain</span>
+<span class="sd">                           should exceed to deploy a bus during non-peak hour.</span>
+<span class="sd">       loc (int): The distance from the terminal that the nearest bus should reach</span>
+<span class="sd">                  before another bus could be deployed.</span>
+<span class="sd">       n_epochs (int): Number of epochs to run.</span>
+<span class="sd">       n_test (int, optional): Number of iterations in each epochs. Default is 1000.</span>
+<span class="sd">       </span>
+<span class="sd">    Returns:</span>
+<span class="sd">       An array with elements being the average reward per unit time in each epoch.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">)</span>    <span class="c1"># Stores the average rewards of each epochs.</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_test</span><span class="p">)</span>  <span class="c1"># Stores the rewards at each time step in one epoch.</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_test</span><span class="p">):</span>
+            <span class="c1"># Get the current representation of the environment.</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_feature</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Check if it is currently a peak hour and set the threshold accordingly.</span>
+            <span class="c1"># Take the action of deploying a bus if both conditions are satisfied.</span>
+            <span class="k">if</span> <span class="mi">300</span> <span class="o">&lt;=</span> <span class="n">line</span><span class="o">.</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="mi">400</span> <span class="ow">or</span> <span class="mi">700</span> <span class="o">&lt;=</span> <span class="n">line</span><span class="o">.</span><span class="n">time</span> <span class="o">&lt;=</span> <span class="mi">800</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">passenger1</span> <span class="ow">and</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">loc</span><span class="o">/</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">D</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">passenger2</span> <span class="ow">and</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">loc</span><span class="o">/</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">D</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">avg</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+                
+    <span class="k">return</span> <span class="n">avg</span></div>
+
+<div class="viewcode-block" id="fixed"><a class="viewcode-back" href="../modules/helper.html#helper.fixed">[docs]</a><span class="k">def</span> <span class="nf">fixed</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_test</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;To get the average rewards of a handcrafted policy. The policy is to deploy</span>
+<span class="sd">    a bus when the nearest bus from the terminal is further than a certain distance.</span>
+<span class="sd">    The number of passengers at each station does not effect the decision of</span>
+<span class="sd">    whether to deploy a bus.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       line (BusLine): Bus route that the policy will be implemented on.</span>
+<span class="sd">       loc (int): The distance from the terminal that the nearest bus should reach</span>
+<span class="sd">                  before another bus could be deployed.</span>
+<span class="sd">       n_epochs (int): Number of epochs to run.</span>
+<span class="sd">       n_test (int, optional): Number of iterations in each epochs. Default is 1000.</span>
+<span class="sd">       </span>
+<span class="sd">    Returns:</span>
+<span class="sd">       An array with elements being the average reward per unit time in each epoch.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">)</span>    <span class="c1"># Stores the average rewards of each epochs.</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_test</span><span class="p">)</span>  <span class="c1"># Stores the rewards at each time step in one epoch.</span>
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_test</span><span class="p">):</span>
+            <span class="c1"># Get the current representation of the environment.</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_feature</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                
+            <span class="c1"># Take the action of deploying a bus reaches the location specified.  </span>
+            <span class="k">if</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">loc</span><span class="o">/</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">D</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>        
+        
+        <span class="n">avg</span><span class="p">[</span><span class="n">ep</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">avg</span></div>
+
+<span class="c1">###################################################################################</span>
+<span class="c1">#                       Reinforcement Learning Methods                            #</span>
+<span class="c1">###################################################################################</span>
+
+<div class="viewcode-block" id="reinforce"><a class="viewcode-back" href="../modules/helper.html#helper.reinforce">[docs]</a><span class="k">def</span> <span class="nf">reinforce</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">estimator_policy</span><span class="p">,</span> <span class="n">estimator_value</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">,</span> \
+              <span class="n">batch_size</span><span class="p">,</span> <span class="n">display_step</span><span class="p">,</span> <span class="n">n_test</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;REINFORCE with baseline is implemented to find an optimal policy. </span>
+<span class="sd">    At certain epochs, the performance of the current policy will be tested. </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       line (BusLine): Bus route that the algorithm will be implemented on.</span>
+<span class="sd">       estimator_policy (PolicyEstimator): Policy function approximator to be</span>
+<span class="sd">                                           optimized.</span>
+<span class="sd">       estimator_value (StateValueEstimator): State-value function approximator</span>
+<span class="sd">                                              which will be used as a baseline.</span>
+<span class="sd">       n_epochs (int): Number of epochs to run.</span>
+<span class="sd">       n_iters (int): Number of iterations in each epochs during training.</span>
+<span class="sd">       batch_size (int): Number of samples to used during each training phase.</span>
+<span class="sd">       display_step (int): Number of epochs to run in between each testing phase.</span>
+<span class="sd">       n_test (int, optional): Number of iterations during testing. Default is 1000.</span>
+<span class="sd">       </span>
+<span class="sd">    Returns:</span>
+<span class="sd">       Array containing the average reward per unit time in each testing phase.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="p">[]</span>                <span class="c1"># Stores the average rewards of each testing phase.</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_test</span><span class="p">)</span> <span class="c1"># Stores the rewards at each time step in testing.</span>
+    
+    <span class="c1"># Initialize variables to store information on transition during training.</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_iters</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">N</span><span class="o">+</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">actions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_iters</span><span class="p">)</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_iters</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iters</span><span class="p">):</span>
+            <span class="c1"># Choose action based on the policy function and take the action.</span>
+            <span class="n">cur_state</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_feature</span><span class="p">()</span>
+            <span class="n">action_probs</span> <span class="o">=</span> <span class="n">estimator_policy</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">cur_state</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">action_probs</span><span class="p">)),</span> <span class="n">p</span><span class="o">=</span><span class="n">action_probs</span><span class="p">)</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+
+            <span class="c1"># Keep track of the transition.</span>
+            <span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">rewards</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">R</span>
+            <span class="n">actions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+
+            <span class="c1"># Add reward to total after half of the total iterations (steady state) </span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">n_iters</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="n">R</span>
+
+        <span class="c1"># Average reward of current policy.</span>
+        <span class="n">total</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n_iters</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>  
+        
+        <span class="c1"># Returns is the total differences between rewards and average reward.</span>
+        <span class="n">returns</span> <span class="o">=</span> <span class="n">rewards</span> <span class="o">-</span> <span class="n">total</span>
+        <span class="n">returns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">returns</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Sample the transitions.</span>
+        <span class="n">bstates</span><span class="p">,</span> <span class="n">breturns</span><span class="p">,</span> <span class="n">bactions</span> <span class="o">=</span> <span class="n">batch_sampling3</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">returns</span><span class="p">,</span> <span class="n">actions</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+        
+        <span class="c1"># Run optimization on value estimator</span>
+        <span class="n">estimator_value</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bstates</span><span class="p">,</span> <span class="n">breturns</span><span class="p">)</span>
+        <span class="c1"># Calculate the baseline of these states and get the difference with the returns</span>
+        <span class="n">baseline</span> <span class="o">=</span> <span class="n">estimator_value</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">bstates</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">breturns</span> <span class="o">-</span> <span class="n">baseline</span>
+        <span class="c1"># Run optimization on policy estimator.</span>
+        <span class="n">estimator_policy</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bstates</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">bactions</span><span class="p">)</span>
+            
+        <span class="c1"># Test the current policy and get the average reward per time step. </span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">display_step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_test</span><span class="p">):</span>
+                <span class="c1"># Get the current state and choose action based on policy function.</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">get_feature</span><span class="p">()</span>
+                <span class="n">action_probs</span> <span class="o">=</span> <span class="n">estimator_policy</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">state</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">action_probs</span><span class="p">)),</span> <span class="n">p</span><span class="o">=</span><span class="n">action_probs</span><span class="p">)</span>
+                <span class="n">test</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+                
+            <span class="n">avg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">test</span><span class="p">))</span>    
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Epoch &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, Average reward = &quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="si">{:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">avg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">avg</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Evelyn Chee Yi Lyn.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -3,7 +3,7 @@ import numpy as np
 class Station:
     """Common base class for all bus stations. Each day consists of 1000
     unit time. In each hour of the day, the station might have higher passenger
-    arrival rate during the last 15 minutes of the hour (peak hour). 
+    arrival rate during the last 15 minutes of the hour (peak hour).
 
     Args:
         peak_rate (int): An integer >= 1 indicating the mean time
@@ -11,26 +11,17 @@ class Station:
                          passengers during peak hour.
         non_peak_rate (int): An integer >= 1 indicating the mean time
                              interval in between the arrival between two
-                             passengers during non-peak hour.                 
+                             passengers during non-peak hour.
         max_passenger (int): Maximum number of passengers that the station
                              could contain.
-
-    Attributes:
-        peak_rate (int): Mean time interval between the arrival of two
-                         passengers during peak hours.
-        non_peak_rate (int): Mean time interval between the arrival of two
-                             passengers during non-peak hours.
-        passengers (int): Current number of passengers at the station.
-        buses (Bus): Current bus at the station if available.
-        max (int): Maximum number of passengers that the station could contain.
 
     """
 
     def __init__(self, peak_rate, non_peak_rate, max_passengers):
         self.peak = peak_rate
         self.non_peak = non_peak_rate
-        self.passengers = 0
-        self.buses = None
+        self.passengers = 0             # Current number of passengers at the station
+        self.buses = None               # Current bus at the station if available
         self.max = max_passengers
 
     def add_passenger(self, time):
@@ -45,11 +36,11 @@ class Station:
 
         """
         # Higher passenger arrival rate during last 15mins of every hour
-        if 90 <= (time % 120) < 120: 
+        if 90 <= (time % 120) < 120:
             rate = self.peak
         else:
             rate = self.non_peak
-            
+
         total = self.passengers
         self.passengers = min(self.max, self.passengers+np.random.binomial(1,1/rate))
         return total
@@ -88,7 +79,7 @@ class Station:
         """
         if self.buses == bus:
             self.buses = None
-    
+
 class Bus:
     """Common base class for all buses.
 
@@ -96,21 +87,14 @@ class Bus:
         deploy_cost (float): Cost of deploying the bus.
         boarding_rate (int): Number of passengers boarding the bus per unit time.
 
-    Attributes:
-        waiting (int): Total time that the bus still needs to wait at a station.
-        location (int): Current location of the bus in the route.
-        departed (boolean): Indicates if the bus has departed from terminal.
-        deploy_cost (float): Cost of deploying the bus.
-        boarding_rate (int): Number of passengers boarding the bus per unit time.
-
     """
     def __init__(self, deploy_cost, boarding_rate):
-        self.waiting = 0
-        self.location = 0
-        self.departed = False
+        self.waiting = 0                # Total time that the bus still needs to wait at a station
+        self.location = 0               # Current location of the bus in the route
+        self.departed = False           # Indicates if the bus has departed from terminal
         self.deploy_cost = deploy_cost
         self.boarding_rate = boarding_rate
-        
+
     def depart(self):
         """Deploys the bus from terminal.
 
@@ -141,12 +125,12 @@ class Bus:
            passengers (int): Number of passengers that needs to be picked up.
 
         """
-        self.waiting += np.ceil(passengers / self.boarding_rate) 
-        
+        self.waiting += np.ceil(passengers / self.boarding_rate)
+
 class BusLine:
     """Common base class for the bus route and contains Stations and Buses.
     Buses travel in one direction and in a loop. Only one terminal available.
-    Buses operate for 1920 unit time in each day (equivalent to 16 hours). 
+    Buses operate for 1920 unit time in each day (equivalent to 16 hours).
 
     Args:
         distance (int): Distance of the bus route.
@@ -154,31 +138,19 @@ class BusLine:
         overtake_penalty (float): Cost for a bus overtaking another.
         pickup_reward (float): Reward for picking up a passenger.
 
-    Attributes:
-        time (int): Current time of the day.
-        map (array): The map of bus route indicating locations of Station.
-        buses (list): List of buses ready for deployment.
-        N (int): Number of stations.
-        M (int): Number of buses.
-        D (int): Distance of the bus route.
-        waiting_cost (float): Cost for each waiting passenger per unit time.
-        overtake_penalty (float): Cost for a bus overtaking another.
-        no_bus_penalty (float): Penalty for deploying a bus when there is none.
-        pickup_reward (float): Reward for picking up a passenger.
-
     """
     def __init__(self, distance, waiting_cost, overtake_penalty, no_bus_penalty, pickup_reward):
-        self.time = 0
-        self.map = np.zeros(distance, dtype=Station)
-        self.buses = []
-        self.N = 0
-        self.M = 0
+        self.time = 0                                   # Current time of the day
+        self.map = np.zeros(distance, dtype=Station)    # Map of bus route indicating locations of Station
+        self.buses = []                                 # List of buses ready for deployment
+        self.N = 0                                      # Number of stations
+        self.M = 0                                      # Number of buses
         self.D = distance
         self.waiting_cost = waiting_cost
         self.overtake_penalty = overtake_penalty
         self.no_bus_penalty = no_bus_penalty
         self.pickup_reward = pickup_reward
-        
+
     def add_station(self, peak_rate, non_peak_rate, location, max_passengers):
         """Adds station to bus route if no station exists at that location and the
         location is within the bus route.
@@ -189,7 +161,7 @@ class BusLine:
                              passengers during peak hour.
             non_peak_rate (int): An integer >= 1 indicating the mean time
                                  interval in between the arrival between two
-                                 passengers during non-peak hour.                 
+                                 passengers during non-peak hour.
             location (int): Location of the station to be added.
             max_passengers (int): Maximum number of passengers that the station
                                   could contain.
@@ -202,7 +174,7 @@ class BusLine:
         else:
             self.map[location] = Station(peak_rate, non_peak_rate, max_passengers)
             self.N += 1
-            
+
     def add_bus(self, deploy_cost, boarding_rate):
         """Adds a bus which is ready to be deployed for this bus route at terminal.
 
@@ -245,9 +217,9 @@ class BusLine:
 
         # Divides the first N elements by the total maximum passengers that the
         # N stations could contain. Each element indicates the proportion of
-        # passengers at that station out of the total maximum. 
+        # passengers at that station out of the total maximum.
         feature[1:-1] /= total_max
-        
+
         # The nearest bus from the terminal is located and only the distance of
         # the deployed buses are considered. If all buses are currently at the
         # terminal, then the nearest distance would be D+1.
@@ -257,9 +229,9 @@ class BusLine:
                 feature[-1] = min(feature[-1], bus.location)
 
         # Normalizing the last element to be in between 0 and 1 by scaling it
-        # with the distance of the bus route. 
+        # with the distance of the bus route.
         feature[-1] /= self.D + 1
-        
+
         return feature.reshape((1,self.N+2))
 
     def move_forward(self):
@@ -275,7 +247,7 @@ class BusLine:
         # Hence, 0 <= time <= 1920.
         self.time = (self.time+1)%1920
 
-        
+
         reward = 0
 
         # Only buses that have departed from the terminal are considered.
@@ -293,7 +265,7 @@ class BusLine:
                         if isinstance(old_loc, Station):
                             old_loc.outgoing(bus)
 
-                    # Bus will move forward by one unit distance. 
+                    # Bus will move forward by one unit distance.
                     bus.forward()
 
                     # Check if bus arrives at the terminal.
@@ -314,9 +286,9 @@ class BusLine:
         for s in self.map:
             if isinstance(s, Station):
                 reward -= s.add_passenger(self.time) * self.waiting_cost
-           
+
         return reward
-        
+
     def take_action(self, n=0):
         """Bus operator takes an action. n=0 is not deploying any bus and n=1 is to
         deploy one bus from terminal into the route. After taking action,
@@ -340,6 +312,6 @@ class BusLine:
                     return reward
             # Penalized for deploying a bus when there is none.
             reward -= self.no_bus_penalty
-            
+
         reward += self.move_forward()
         return reward

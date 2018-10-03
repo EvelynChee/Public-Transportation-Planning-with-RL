@@ -1,0 +1,11 @@
+sample package
+=============
+
+
+sample.train module
+------------------------
+
+.. automodule:: sample.train
+    :members:
+    :undoc-members:
+    :show-inheritance:

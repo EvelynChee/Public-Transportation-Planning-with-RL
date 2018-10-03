@@ -1,0 +1,412 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>network &mdash; Public Transportation Planning with RL 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Public Transportation Planning with RL
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/intro.html">Public Transportation Planning using RL</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Public Transportation Planning with RL</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>network</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for network</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+<div class="viewcode-block" id="ActionValueEstimator"><a class="viewcode-back" href="../modules/network.html#network.ActionValueEstimator">[docs]</a><span class="k">class</span> <span class="nc">ActionValueEstimator</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Action-value Function approximator. Given a representation of the environment,</span>
+<span class="sd">    returns estimated values over the two actions of the state.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       learning_rate (float): Learning rate used by optimizer.</span>
+<span class="sd">       num_input (int): Size of the state array, i.e. the input.</span>
+<span class="sd">       scope (str): Variable scope name of the operations or variable name</span>
+<span class="sd">                    in the network. Default is value_estimator.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">num_input</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">&quot;value_estimator&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="c1"># Inputs are the state of the environment.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_input</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="c1"># Action that was selected.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+            <span class="c1"># Targeted value of the selected action of the state.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            
+            <span class="c1"># Store layers weight &amp; bias.</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="n">num_input</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
+            <span class="n">b1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">]))</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
+            <span class="n">b2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]))</span>
+            
+            <span class="c1"># Build a 2-layer network.</span>
+            <span class="n">layer1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">W1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">estimate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">W2</span><span class="p">)</span> <span class="o">+</span> <span class="n">b2</span>
+
+            <span class="c1"># Get the predictions for the chosen actions only.</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tf</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">picked_action</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">gather_nd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimate</span><span class="p">,</span> <span class="n">indices</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="c1"># Define loss and optimizer</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">picked_action</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">)</span>
+                                    
+<div class="viewcode-block" id="ActionValueEstimator.predict"><a class="viewcode-back" href="../modules/network.html#network.ActionValueEstimator.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">sess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the estimated values of the two actions of the given state. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">           state (array): Representations of the environement.</span>
+<span class="sd">           sess (Session): Environment in which the operations are executed</span>
+<span class="sd">                           and objects are evaluated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">           Array consisting estimated values of the two actions.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span> <span class="ow">or</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimate</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span><span class="n">state</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="ActionValueEstimator.update"><a class="viewcode-back" href="../modules/network.html#network.ActionValueEstimator.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">sess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the optimizer and update the network given the targeted values. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">           state (array): Representations of the environement.</span>
+<span class="sd">           target (array): Targeted values the state-action pair.</span>
+<span class="sd">           action (array): Actions that was selected in each state.</span>
+<span class="sd">           sess (Session): Environment in which the operations are executed</span>
+<span class="sd">                           and objects are evaluated.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span> <span class="ow">or</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+        <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_model</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">:</span><span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span><span class="p">:</span><span class="n">action</span><span class="p">})</span>                                  </div></div>
+
+<div class="viewcode-block" id="StateValueEstimator"><a class="viewcode-back" href="../modules/network.html#network.StateValueEstimator">[docs]</a><span class="k">class</span> <span class="nc">StateValueEstimator</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;State-value Function approximator. Given a representation of the environment,</span>
+<span class="sd">    returns a estimated value of the state.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       learning_rate (float): Learning rate used by optimizer.</span>
+<span class="sd">       num_input (int): Size of the state array, i.e. the input.</span>
+<span class="sd">       scope (str): Variable scope name of the operations or variable name</span>
+<span class="sd">                    in the network. Default is value_estimator.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">num_input</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">&quot;value_estimator&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="c1"># Inputs are the state of the environment.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_input</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="c1"># Targeted value of the state.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+            <span class="c1"># Store layers weight &amp; bias.</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="n">num_input</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
+            <span class="n">b1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">]))</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
+            <span class="n">b2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]))</span>
+
+            <span class="c1"># Build a 2-layer network.</span>
+            <span class="n">layer1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">W1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">estimate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">W2</span><span class="p">)</span> <span class="o">+</span> <span class="n">b2</span>
+
+            <span class="c1"># Define loss and optimizer.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimate</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">),</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">)</span>
+                                    
+<div class="viewcode-block" id="StateValueEstimator.predict"><a class="viewcode-back" href="../modules/network.html#network.StateValueEstimator.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">sess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the estimated values of the given state. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">           state (array): Representations of the environement.</span>
+<span class="sd">           sess (Session): Environment in which the operations are executed</span>
+<span class="sd">                           and objects are evaluated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">           Estimated value of the given state.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span> <span class="ow">or</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estimate</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span><span class="n">state</span><span class="p">})</span></div>
+    
+<div class="viewcode-block" id="StateValueEstimator.update"><a class="viewcode-back" href="../modules/network.html#network.StateValueEstimator.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">sess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the optimizer and update the network given the targeted values. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">           state (array): Representations of the environement.</span>
+<span class="sd">           target (array): Targeted values the states.</span>
+<span class="sd">           sess (Session): Environment in which the operations are executed</span>
+<span class="sd">                           and objects are evaluated.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span> <span class="ow">or</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+        <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_model</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">:</span><span class="n">target</span><span class="p">})</span></div></div>
+
+<div class="viewcode-block" id="PolicyEstimator"><a class="viewcode-back" href="../modules/network.html#network.PolicyEstimator">[docs]</a><span class="k">class</span> <span class="nc">PolicyEstimator</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Policy Function approximator. Given a representation of the environment,</span>
+<span class="sd">    returns probabilities of taking the two actions of the state.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">       learning_rate (float): Learning rate used by optimizer.</span>
+<span class="sd">       num_input (int): Size of the state array, i.e. the input.</span>
+<span class="sd">       scope (str): Variable scope name of the operations or variable name</span>
+<span class="sd">                    in the network. Default is policy_estimator.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">num_input</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s2">&quot;policy_estimator&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="c1"># Inputs are the state of the environment.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_input</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="c1"># Action that was selected.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+            <span class="c1"># Targeted value of the selected action of the state.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+            <span class="c1"># Store layers weight &amp; bias</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="n">num_input</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
+            <span class="n">b1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">]))</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="n">num_input</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))</span>
+            <span class="n">b2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]))</span>
+
+            <span class="c1"># Build a 2-layer network.</span>
+            <span class="n">layer1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">W1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b1</span><span class="p">)</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">W2</span><span class="p">)</span> <span class="o">+</span> <span class="n">b2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action_probs</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+            
+            <span class="c1"># Get the probabilites for the chosen actions only.</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tf</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">picked_action_prob</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">gather_nd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_probs</span><span class="p">,</span> <span class="n">indices</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="c1"># Define loss and optimizer.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">picked_action_prob</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">)</span>
+                                    
+<div class="viewcode-block" id="PolicyEstimator.predict"><a class="viewcode-back" href="../modules/network.html#network.PolicyEstimator.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">sess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the probabilities of taking the two actions of the given state. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">           state (array): Representations of the environement.</span>
+<span class="sd">           sess (Session): Environment in which the operations are executed</span>
+<span class="sd">                           and objects are evaluated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">           Array consisting probabilities of the two actions.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span> <span class="ow">or</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_probs</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span><span class="n">state</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="PolicyEstimator.update"><a class="viewcode-back" href="../modules/network.html#network.PolicyEstimator.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">sess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the optimizer and update the network given the targeted values. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">           state (array): Representations of the environement.</span>
+<span class="sd">           target (array): Targeted values the selected actions.</span>
+<span class="sd">           action (array): Actions that was selected in each state.</span>
+<span class="sd">           sess (Session): Environment in which the operations are executed</span>
+<span class="sd">                           and objects are evaluated.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span> <span class="ow">or</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+        <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_model</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">:</span><span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action</span><span class="p">:</span><span class="n">action</span><span class="p">})</span>                                  </div></div>
+        
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Evelyn Chee Yi Lyn.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
