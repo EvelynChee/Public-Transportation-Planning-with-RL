@@ -18,23 +18,23 @@ def create_line(D, stations, max_passengers, waiting_cost, deploy_cost, \
        overtake_penalty (float): Cost for a bus overtaking another.
        no_bus_penalty (float): Penalty for deploying a bus when there is none.
        pickup_reward (float): Reward for picking up a passenger.
-    
+
     Returns:
        BusLine created.
 
     """
     # Creates a new bus route with buses traveling in a loop.
     line = BusLine(D, waiting_cost, overtake_penalty, no_bus_penalty, pickup_reward)
-    
+
     # Adding stations to the bus route.
     for loc, peak_rate, non_peak_rate in stations:
         line.add_station(peak_rate, non_peak_rate, loc, max_passengers)
-    
+
     # Adding 10 buses to the terminal of the bus route with all buses having
     # the same deployment cost and boarding rate.
     for _ in range(10):
         line.add_bus(deploy_cost, boarding_rate)
-    
+
     return line
 
 def batch_sampling3(x, y, z, batch_size):
@@ -52,7 +52,7 @@ def batch_sampling3(x, y, z, batch_size):
 
     """
     samples = np.random.randint(len(x), size=batch_size)
-    return x[samples], y[samples], z[samples]    
+    return x[samples], y[samples], z[samples]
 
 ###################################################################################
 #                             Handcrafted Policies                                #
@@ -61,7 +61,7 @@ def batch_sampling3(x, y, z, batch_size):
 def no_bus(line, passenger, loc, n_epochs, n_test=1000):
     """To get the average rewards of a handcrafted policy. The policy is to deploy
     a bus when the total number of passengers in the bus route exceeds a certain
-    amount and the nearest bus from the terminal is further than a certain distance. 
+    amount and the nearest bus from the terminal is further than a certain distance.
 
     Args:
        line (BusLine): Bus route that the policy will be implemented on.
@@ -72,10 +72,10 @@ def no_bus(line, passenger, loc, n_epochs, n_test=1000):
                   before another bus could be deployed.
        n_epochs (int): Number of epochs to run.
        n_test (int, optional): Number of iterations in each epochs. Default is 1000.
-       
+
     Returns:
        An array with elements being the average reward per unit time in each epoch.
-    
+
     """
     avg = np.empty(n_epochs)    # Stores the average rewards of each epochs.
     rewards = np.empty(n_test)  # Stores the rewards at each time step in one epoch.
@@ -91,7 +91,7 @@ def no_bus(line, passenger, loc, n_epochs, n_test=1000):
                 rewards[i] = line.take_action(0)
 
         avg[ep] = np.mean(rewards)
-                
+
     return avg
 
 def no_bus_timing(line, passenger1, passenger2, loc, n_epochs, n_test=1000):
@@ -113,10 +113,10 @@ def no_bus_timing(line, passenger1, passenger2, loc, n_epochs, n_test=1000):
                   before another bus could be deployed.
        n_epochs (int): Number of epochs to run.
        n_test (int, optional): Number of iterations in each epochs. Default is 1000.
-       
+
     Returns:
        An array with elements being the average reward per unit time in each epoch.
-    
+
     """
     avg = np.empty(n_epochs)    # Stores the average rewards of each epochs.
     rewards = np.empty(n_test)  # Stores the rewards at each time step in one epoch.
@@ -139,7 +139,7 @@ def no_bus_timing(line, passenger1, passenger2, loc, n_epochs, n_test=1000):
                     rewards[i] = line.take_action(0)
 
         avg[ep] = np.mean(rewards)
-                
+
     return avg
 
 def fixed(line, loc, n_epochs, n_test=1000):
@@ -154,10 +154,10 @@ def fixed(line, loc, n_epochs, n_test=1000):
                   before another bus could be deployed.
        n_epochs (int): Number of epochs to run.
        n_test (int, optional): Number of iterations in each epochs. Default is 1000.
-       
+
     Returns:
        An array with elements being the average reward per unit time in each epoch.
-    
+
     """
     avg = np.empty(n_epochs)    # Stores the average rewards of each epochs.
     rewards = np.empty(n_test)  # Stores the rewards at each time step in one epoch.
@@ -165,13 +165,13 @@ def fixed(line, loc, n_epochs, n_test=1000):
         for i in range(n_test):
             # Get the current representation of the environment.
             state = line.get_feature()[0]
-                
-            # Take the action of deploying a bus reaches the location specified.  
+
+            # Take the action of deploying a bus reaches the location specified.
             if state[-1] >= loc/(line.D+1):
                 rewards[i] = line.take_action(1)
             else:
-                rewards[i] = line.take_action(0)        
-        
+                rewards[i] = line.take_action(0)
+
         avg[ep] = np.mean(rewards)
 
     return avg
@@ -180,10 +180,92 @@ def fixed(line, loc, n_epochs, n_test=1000):
 #                       Reinforcement Learning Methods                            #
 ###################################################################################
 
+def func_approx(line, estimator, n_epochs, n_iters, batch_size, display_step, \
+                 gamma, n_test=1000):
+    """Function approximation algorithm with Q-learning is implemented to estimate
+    the optimal action-value function. At each step, actions are chosen using
+    epsilon-greedy policy based on the current estimated action-value function.
+    At certain epochs, the performance of the current policy will be tested.
+
+    Args:
+       line (BusLine): Bus route that the algorithm will be implemented on.
+       estimator (ActionValueEstimator): Action-value function approximator
+                                         which will be trained.
+       n_epochs (int): Number of epochs to run.
+       n_iters (int): Number of iterations in each epochs during training.
+       batch_size (int): Number of samples to used during each training phase.
+       display_step (int): Number of epochs to run in between each testing phase.
+       gamma (float): Time-discount factor which is in between 0 and 1.
+       n_test (int, optional): Number of iterations during testing. Default is 1000.
+
+    Returns:
+       Array containing the average reward per unit time in each testing phase.
+
+    """
+    avg = []                # Stores the average rewards of each testing phase.
+    test = np.empty(n_test) # Stores the rewards at each time step in testing.
+
+    # Initialize variables to store information on transition during training.
+    states = np.empty((n_iters, line.N+1))
+    values = np.empty((n_iters, 1))
+    actions = np.empty(n_iters)
+
+    # Initialize current state of the environment.
+    cur_state = line.get_feature()
+    for epoch in range(n_epochs):
+        # Decrease epsilon at each epoch.
+        epsilon = 1/(0.0001*epoch+ 0.9)
+
+        for i in range(n_iters):
+            # Get action-value of current state.
+            cur_Q = estimator.predict(cur_state)
+
+            # Choose action using epsilon-greedy policy.
+            if np.random.rand(1) < epsilon:
+                action = np.random.randint(2)
+            else:
+                action = np.argmax(cur_Q[0])
+
+            # Take the action and observe the reward, new state and action-value.
+            R = line.take_action(action)
+            new_state = line.get_feature()
+            new_Q = estimator.predict(new_state)
+
+            # Keep track of the transition.
+            values[i] = R + gamma*np.max(new_Q)
+            states[i] = cur_state[0]
+            actions[i] = action
+
+            cur_state = new_state
+
+        # Sample the transitions and run optimization on value estimator.
+        bstates, bvalues, bactions = batch_sampling3(states, values, actions, batch_size)
+        estimator.update(bstates, bvalues, bactions)
+
+        # Test the current policy and get the average reward per time step.
+        if (epoch+1) % display_step == 0:
+            for j in range(n_test):
+                # Get the current state and the estimated action-value.
+                state = line.get_feature()
+                Qs = estimator.predict(state)
+
+                # Choose action using epsilon-greedy policy.
+                if np.random.rand(1) < epsilon:
+                    action = np.random.randint(2)
+                else:
+                    action = np.argmax(Qs[0])
+                test[j] = line.take_action(action)
+
+            avg.append(np.mean(test))
+            print("Epoch " + str(epoch+1) + ", Average reward = " + \
+                  "{:.3f}".format(avg[-1]))
+
+    return avg
+
 def reinforce(line, estimator_policy, estimator_value, n_epochs, n_iters, \
               batch_size, display_step, n_test=1000):
-    """REINFORCE with baseline is implemented to find an optimal policy. 
-    At certain epochs, the performance of the current policy will be tested. 
+    """REINFORCE with baseline is implemented to find an optimal policy.
+    At certain epochs, the performance of the current policy will be tested.
 
     Args:
        line (BusLine): Bus route that the algorithm will be implemented on.
@@ -196,22 +278,22 @@ def reinforce(line, estimator_policy, estimator_value, n_epochs, n_iters, \
        batch_size (int): Number of samples to used during each training phase.
        display_step (int): Number of epochs to run in between each testing phase.
        n_test (int, optional): Number of iterations during testing. Default is 1000.
-       
+
     Returns:
        Array containing the average reward per unit time in each testing phase.
-    
+
     """
     avg = []                # Stores the average rewards of each testing phase.
     test = np.empty(n_test) # Stores the rewards at each time step in testing.
-    
+
     # Initialize variables to store information on transition during training.
     states = np.empty((n_iters, line.N+2))
     actions = np.empty(n_iters)
     rewards = np.empty(n_iters)
-    
+
     for epoch in range(n_epochs):
         total = 0
-        
+
         for i in range(n_iters):
             # Choose action based on the policy function and take the action.
             cur_state = line.get_feature()
@@ -224,20 +306,20 @@ def reinforce(line, estimator_policy, estimator_value, n_epochs, n_iters, \
             rewards[i] = R
             actions[i] = action
 
-            # Add reward to total after half of the total iterations (steady state) 
+            # Add reward to total after half of the total iterations (steady state)
             if i >= np.floor(n_iters/2):
                 total += R
 
         # Average reward of current policy.
-        total /= np.ceil(n_iters/2)  
-        
+        total /= np.ceil(n_iters/2)
+
         # Returns is the total differences between rewards and average reward.
         returns = rewards - total
         returns = np.expand_dims(np.cumsum(returns[::-1])[::-1] , axis=1)
-        
+
         # Sample the transitions.
         bstates, breturns, bactions = batch_sampling3(states, returns, actions, batch_size)
-        
+
         # Run optimization on value estimator
         estimator_value.update(bstates, breturns)
         # Calculate the baseline of these states and get the difference with the returns
@@ -245,8 +327,8 @@ def reinforce(line, estimator_policy, estimator_value, n_epochs, n_iters, \
         delta = breturns - baseline
         # Run optimization on policy estimator.
         estimator_policy.update(bstates, delta, bactions)
-            
-        # Test the current policy and get the average reward per time step. 
+
+        # Test the current policy and get the average reward per time step.
         if (epoch+1) % display_step == 0:
             for j in range(n_test):
                 # Get the current state and choose action based on policy function.
@@ -254,9 +336,8 @@ def reinforce(line, estimator_policy, estimator_value, n_epochs, n_iters, \
                 action_probs = estimator_policy.predict(state)[0]
                 action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
                 test[j] = line.take_action(action)
-                
-            avg.append(np.mean(test))    
+
+            avg.append(np.mean(test))
             print("Epoch " + str(epoch+1) + ", Average reward = " + "{:.3f}".format(avg[-1]))
 
     return avg
-
